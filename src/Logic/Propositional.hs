@@ -14,6 +14,8 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE GADTs #-}
 
 module Logic.Propositional
   (
@@ -196,6 +198,7 @@ import Unsafe.Coerce
 import Data.Proxy
 
 import Control.Monad ((>=>))
+import Data.Maybe (mapMaybe)
 
 {--------------------------------------------------
   The `Proof` monad
@@ -1048,6 +1051,50 @@ instance Simplifiable (p `Implies` q) (q `Or` Not p)
 class Cases pat cs r where
   cases :: pat -> cs -> Proof r
 
+defCase :: Matchy (Proxy g, t) (AlsoGuard' g m) t =>
+  Proxy g -> (x -> Bool) -> (x -> t) -> (x -> Maybe (Match (AlsoGuard (g, m)) t))
+defCase pxy guard body = \x -> if guard x then Just (mkCase (pxy, body x)) else Nothing
+  
+mkCase :: Matchy (Proxy g, f) (AlsoGuard' g m) t => (Proxy g, f) -> Match (AlsoGuard (g, m)) t
+mkCase = unrollAlsoGuard . mkCase'
+
+type CaseList x t = [x -> Maybe (SomeCase t)]
+
+runMatch :: CaseList x t -> x -> t
+runMatch fs x = case mapMaybe ($x) fs of
+  (SomeCase y : _) -> coerce y
+  [] -> error "ran out of cases!"
+
+
+data SomeCase t where
+  SomeCase :: forall g m t. Match (AlsoGuard (g,m)) t -> SomeCase t
+  
+class Matchy f m t | f -> m where
+  mkCase' :: f -> Match m t
+
+instance Matchy (Proxy g, t ~~ n) (AlsoGuard' g (MName n)) t where
+  mkCase' = coerce . snd
+  
+instance Matchy (Proxy g, Match m t) (AlsoGuard' g m) t where
+  mkCase' = coerce . snd
+
+data AlsoGuard' g m
+unrollAlsoGuard :: Match (AlsoGuard' g m) t -> Match (AlsoGuard (g, m)) t
+unrollAlsoGuard = coerce
+
+type family AlsoGuard gms = ag | ag -> gms
+
+type instance AlsoGuard (g, MName n)     = MGuard g (MName n)
+type instance AlsoGuard (g, MGuard g' m) = MGuard g (MGuard g' m)
+type instance AlsoGuard (g, MCons m ms)  = MCons (AlsoGuard (g, m)) (AlsoGuard (g, ms))
+
+newtype Match m t = Match t
+data MName n
+data MGuard g m
+data MCons m ms
+
+
+                                                                          
 {--------------------------------------------------
   Theory of equality and identity
 --------------------------------------------------}
