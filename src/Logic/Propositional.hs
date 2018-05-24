@@ -145,6 +145,10 @@ module Logic.Propositional
 
   -- * Pattern matching
   , Cases(..)
+  , defCase
+  , (<+>)
+  , toDef
+  , Match, MCons, MName, MGuard, AlsoGuard, Matchy(..)
   
   -- * User-defined theories
   , Defn, Defining
@@ -198,6 +202,7 @@ import Unsafe.Coerce
 import Data.Proxy
 
 import Control.Monad ((>=>))
+import Control.Applicative ((<|>))
 import Data.Maybe (mapMaybe)
 
 {--------------------------------------------------
@@ -1060,14 +1065,43 @@ mkCase = unrollAlsoGuard . mkCase'
 
 type CaseList x t = [x -> Maybe (SomeCase t)]
 
+newtype CtorTest g x = CtorTest (x -> Bool)
+
 runMatch :: CaseList x t -> x -> t
 runMatch fs x = case mapMaybe ($x) fs of
   (SomeCase y : _) -> coerce y
   [] -> error "ran out of cases!"
 
+defCase' :: Matchy (Proxy g, t) (AlsoGuard' g m) t =>
+  Proxy g -> (x -> Bool) -> (x -> t) -> (x -> Maybe t, Proxy (AlsoGuard (g,m)))
+defCase' pxy guard body = (\x -> if guard x then Just (body x) else Nothing, Proxy)
+
+(<+>) :: (x -> Maybe (Match (AlsoGuard (g, m)) t))
+     -> (x -> Maybe (Match (AlsoGuard (g',m')) t))
+     -> (x -> Maybe (Match ((MCons (AlsoGuard (g, m)) (AlsoGuard (g',m')))) t))
+p1 <+> p2 = (\x -> coerce (p1 x) <|> coerce (p2 x))
+
+toDef :: (MClause p, Defining f) => (x -> Maybe (Match p t)) -> (x -> (t ~~ f ::: M2Ty p f))
+toDef body = \x -> case body x of
+  Just y  -> coerce y
+  Nothing -> error "incomplete pattern coverage!"
+  
+class MClause m where
+  type M2Ty m x
+  tagM2Ty :: x -> x ::: M2Ty m x
+  tagM2Ty = coerce
+  
+instance MClause (MName n) where
+  type M2Ty (MName n) x = x == n
+  
+instance MClause m => MClause (MGuard g m) where
+  type M2Ty (MGuard g m) x = g && M2Ty m x
+
+instance (MClause m, MClause ms) => MClause (MCons m ms) where
+  type M2Ty (MCons m ms) x = M2Ty m x || M2Ty ms x
 
 data SomeCase t where
-  SomeCase :: forall g m t. Match (AlsoGuard (g,m)) t -> SomeCase t
+  SomeCase :: forall g m t. MClause (AlsoGuard (g,m)) => Match (AlsoGuard (g,m)) t -> SomeCase t
   
 class Matchy f m t | f -> m where
   mkCase' :: f -> Match m t

@@ -55,6 +55,7 @@ module Theory.Nat.Assumed
 
 import Prelude hiding (succ, pred)
 import Logic.Propositional
+import Data.Proxy
 
 -- | The natural numbers
 newtype Nat = Nat Defn
@@ -296,3 +297,15 @@ def_by_nat_cases :: (Defining f, Argument f a, GetArg f a ~ n)
               || (IsSucc n && (f == scase))))
 def_by_nat_cases _ n zc sc = inject sorry $
   assert_is $ nat_cases n (nameless.zc) (\pf p -> nameless (sc pf p))
+
+nat_cases' :: forall n f a zcase scase t1 t2 t m1 m2. (Defining f, Argument f a, GetArg f a ~ n,
+                                                     Matchy (Proxy (IsZero n), t1) m1 t, Matchy (Proxy (IsSucc n), t2) m2 t)
+  => (Proof (IsZero n) -> t1) 
+  -> (Proof (IsSucc n) -> (Integer ~~ Pred n) -> t2)
+  -> (Integer ~~ n)
+  -> Maybe (Match (MCons (AlsoGuard (IsZero n, m1))
+                         (AlsoGuard (IsSucc n, m2))) t)
+
+nat_cases' zc sc
+  =   defCase (Proxy @(IsZero n)) ((== 0) . nameless) (const $ zc sorry)
+  <+> defCase (Proxy @(IsSucc n)) ((/= 0) . nameless) (\n -> sc sorry (assert_is $ nameless n - 1))
