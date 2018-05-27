@@ -42,6 +42,8 @@ module Logic.Propositional
   
   , toSpec
   , toSpecPxy
+
+  , Prop(..)
   
   -- * First-order Logic
 
@@ -144,11 +146,9 @@ module Logic.Propositional
   , apply
 
   -- * Pattern matching
-  , Cases(..)
-  , defCase
-  , (<+>)
-  , toDef
-  , Match, MCons, MName, MGuard, AlsoGuard, Matchy(..)
+  , (<++>), toDef', ToMatch(..), Decorated(..), defCase', closeCases, toBareDef, toDefDisj
+  , Discriminable(..), Selectable(..), SelectCase(..), MatchCtor(..)
+  , Match, MCons, MName, MGuard, MClause(..)
   
   -- * User-defined theories
   , Defn, Defining
@@ -1051,84 +1051,88 @@ instance Simplifiable (p `Implies` q) (q `Or` Not p)
   Pattern matching
 --------------------------------------------------}
 
--- | The @Cases@ typeclass is used to destructure an
---   inductive type, by matching a case against a pattern.
-class Cases pat cs r where
-  cases :: pat -> cs -> Proof r
+defCase' :: ToMatch t0 t m =>
+  Proxy g -> (x -> Bool) -> (x -> t0) -> (x -> Maybe (Match (MGuard g m) t))
+defCase' pxy guard body = \x -> if guard x then Just (coerce $ undecorate $ body x) else Nothing
 
-defCase :: Matchy (Proxy g, t) (AlsoGuard' g m) t =>
-  Proxy g -> (x -> Bool) -> (x -> t) -> (x -> Maybe (Match (AlsoGuard (g, m)) t))
-defCase pxy guard body = \x -> if guard x then Just (mkCase (pxy, body x)) else Nothing
+class Decorated t0 t | t0 -> t where
+  undecorate :: t0 -> t
+
+instance Decorated (t ~~ n) t where
+  undecorate = coerce
+
+instance Decorated (t ~~ n ::: p) t where
+  undecorate = coerce
+
+instance Decorated (Match m t) t where
+  undecorate = coerce
   
-mkCase :: Matchy (Proxy g, f) (AlsoGuard' g m) t => (Proxy g, f) -> Match (AlsoGuard (g, m)) t
-mkCase = unrollAlsoGuard . mkCase'
-
-type CaseList x t = [x -> Maybe (SomeCase t)]
-
-newtype CtorTest g x = CtorTest (x -> Bool)
-
-runMatch :: CaseList x t -> x -> t
-runMatch fs x = case mapMaybe ($x) fs of
-  (SomeCase y : _) -> coerce y
-  [] -> error "ran out of cases!"
-
-defCase' :: Matchy (Proxy g, t) (AlsoGuard' g m) t =>
-  Proxy g -> (x -> Bool) -> (x -> t) -> (x -> Maybe t, Proxy (AlsoGuard (g,m)))
-defCase' pxy guard body = (\x -> if guard x then Just (body x) else Nothing, Proxy)
-
-(<+>) :: (x -> Maybe (Match (AlsoGuard (g, m)) t))
-     -> (x -> Maybe (Match (AlsoGuard (g',m')) t))
-     -> (x -> Maybe (Match ((MCons (AlsoGuard (g, m)) (AlsoGuard (g',m')))) t))
-p1 <+> p2 = (\x -> coerce (p1 x) <|> coerce (p2 x))
-
-toDef :: (MClause p, Defining f) => (x -> Maybe (Match p t)) -> (x -> (t ~~ f ::: M2Ty p f))
-toDef body = \x -> case body x of
-  Just y  -> coerce y
-  Nothing -> error "incomplete pattern coverage!"
+class (Decorated t0 t, MClause m) => ToMatch t0 t m | t0 -> t, t0 -> m where
+  toMatch :: t0 -> Match m t
   
+instance ToMatch (t ~~ n) t (MName n) where
+  toMatch    = coerce
+
+instance ToMatch (t ~~ n ::: p) t (MGuard p (MName n)) where
+  toMatch    = coerce
+  
+instance (Decorated (Match m t) t, MClause m) => ToMatch (Match m t) t m where
+  toMatch    = coerce
+  
+(<++>) :: (ToMatch t0 t m, ToMatch t1 t m')
+  => (a -> Maybe t0) -> (a -> Maybe t1) -> (a -> Maybe (Match (MCons m m') t))
+p1 <++> p2 = \x -> coerce ((undecorate <$> p1 x) <|> (undecorate <$> p2 x))
+
+closeCases :: (a -> Maybe t) -> (a -> t)
+closeCases f = maybe (error "incomplete pattern coverage!") id . f
+
+toDef' :: (MClause m, ToMatch t0 t m, Defining f) => (a -> t0) -> (a -> (t ~~ f ::: M2Ty m f))
+toDef' f = coerce . undecorate . f
+
+toDefDisj :: (MClause m, ToMatch t0 t m, Defining f) => (a -> t0) -> (a -> (t ~~ f ::: M2TyDisj m f))
+toDefDisj f = coerce . undecorate . f
+
+toBareDef :: (Decorated t0 t, Defining f) => (a -> t0) -> (a -> t ~~ f)
+toBareDef f = coerce . undecorate . f
+
 class MClause m where
-  type M2Ty m x
+  type M2Ty m x = c | c -> m
+  type M2TyDisj m x = c | c -> m
   tagM2Ty :: x -> x ::: M2Ty m x
   tagM2Ty = coerce
   
 instance MClause (MName n) where
-  type M2Ty (MName n) x = x == n
+  type M2Ty     (MName n) x = x == n
+  type M2TyDisj (MName n) x = x == n
   
 instance MClause m => MClause (MGuard g m) where
-  type M2Ty (MGuard g m) x = g && M2Ty m x
-
+  type M2Ty     (MGuard g m) x = g && M2Ty m x
+  type M2TyDisj (MGuard g m) x = g --> M2TyDisj m x
+  
 instance (MClause m, MClause ms) => MClause (MCons m ms) where
-  type M2Ty (MCons m ms) x = M2Ty m x || M2Ty ms x
-
-data SomeCase t where
-  SomeCase :: forall g m t. MClause (AlsoGuard (g,m)) => Match (AlsoGuard (g,m)) t -> SomeCase t
+  type M2Ty     (MCons m ms) x = M2Ty m x || M2Ty ms x
+  type M2TyDisj (MCons m ms) x = M2TyDisj m x && M2TyDisj ms x
   
-class Matchy f m t | f -> m where
-  mkCase' :: f -> Match m t
-
-instance Matchy (Proxy g, t ~~ n) (AlsoGuard' g (MName n)) t where
-  mkCase' = coerce . snd
-  
-instance Matchy (Proxy g, Match m t) (AlsoGuard' g m) t where
-  mkCase' = coerce . snd
-
-data AlsoGuard' g m
-unrollAlsoGuard :: Match (AlsoGuard' g m) t -> Match (AlsoGuard (g, m)) t
-unrollAlsoGuard = coerce
-
-type family AlsoGuard gms = ag | ag -> gms
-
-type instance AlsoGuard (g, MName n)     = MGuard g (MName n)
-type instance AlsoGuard (g, MGuard g' m) = MGuard g (MGuard g' m)
-type instance AlsoGuard (g, MCons m ms)  = MCons (AlsoGuard (g, m)) (AlsoGuard (g, ms))
-
 newtype Match m t = Match t
 data MName n
 data MGuard g m
 data MCons m ms
 
+class Discriminable p q | p -> q, q -> p where
+  discrim   :: p -> Proof q
+  undiscrim :: q -> Proof p
 
-                                                                          
+class MatchCtor p where
+  match_ctor :: Proof p
+  default match_ctor :: Defining p => Proof p
+  match_ctor = sorry
+  
+class Selectable p q r where
+  select :: forall p q r. p -> q -> Proof r
+
+class SelectCase p q where
+  select_case :: p -> Proof q
+  
 {--------------------------------------------------
   Theory of equality and identity
 --------------------------------------------------}
@@ -1181,8 +1185,8 @@ using (named x) id
 
     The compiler responds with an error, /e.g./
 @
-    • Couldn't match type ‘t’ with ‘a ::: Is c’
-        because type variable ‘c’ would escape its scope
+    • Couldn't match type ‘t’ with ‘a ~~ name’
+        because type variable ‘name’ would escape its scope
 @
 -}
 using :: a -> (forall name. (a ~~ name) -> t) -> t
@@ -1246,8 +1250,8 @@ same x y = if nameless x == nameless y
 -- | Given a function and an equality over ones of its arguments,
 --   replace the left-hand side of the equality with the right-hand side.
 substitute :: (Argument f n, GetArg f n ~ x)
-    => Arg n -> (x == x') -> f -> SetArg f n x'
-substitute _ _ = unsafeCoerce
+    => Arg n -> (x == x') -> f -> Proof (SetArg f n x')
+substitute _ _ _ = QED
 
 -- | Substitute @x'@ for @x@ under the function @f@, on the left-hand side
 --   of an equality.
@@ -1262,7 +1266,7 @@ substituteR :: (Argument f n, GetArg f n ~ x)
 substituteR _ _ _ = QED
 
 -- | Apply a function to both sides of an equality.
-apply :: (Argument f n, GetArg f n ~ x)
+apply :: forall f n x x'. (Argument f n, GetArg f n ~ x)
     => Arg n -> (x == x') -> Proof (f == SetArg f n x')
 apply _ _ = QED
   
@@ -1290,7 +1294,7 @@ assertNot = coerce
 assert_ex :: Defining (p t) => a -> (a ::: Exists t (p t))
 assert_ex = coerce
 
-assert_is :: Defining p => a -> (a ~~ p)
+assert_is :: forall p a. Defining p => a -> (a ~~ p)
 assert_is = coerce
 
 assert_is1 :: Defining (p t) => a -> (a ~~ p t)

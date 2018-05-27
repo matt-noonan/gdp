@@ -7,6 +7,7 @@
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeApplications      #-}
 
 module Theory.Nat.Assumed
   ( Nat
@@ -36,10 +37,13 @@ module Theory.Nat.Assumed
   , type (<)
   , trichotomy
   , order_addL
+  , order_succ
+  , order_pred
   , order_mulL
   , exists_diff
   , zero_then_one
   , zero_min
+  , separated
 
   , compare_eq
   , induct
@@ -50,11 +54,17 @@ module Theory.Nat.Assumed
 
   , nat_cases
   , def_by_nat_cases
+  , def_by_nat_cases'
+  , nat_cases'
+  , test1
+  , succ_pred_lemma
+  , nat_classify
 
   ) where
 
 import Prelude hiding (succ, pred)
 import Logic.Propositional
+import Tactics
 import Data.Proxy
 
 -- | The natural numbers
@@ -91,17 +101,10 @@ instance Argument (IsSucc n) 0 where
   type GetArg (IsSucc n) 0    = n
   type SetArg (IsSucc n) 0 n' = IsSucc n'
 
-instance Cases (IsZero n) ((IsZero n && p) || (IsSucc n && q)) p where
-  cases _ _ = sorry
-
-instance Cases Zero ((IsZero Zero && p) || (IsSucc Zero && q)) p where
-  cases _ _ = sorry
-
-instance Cases (IsSucc n) ((IsZero n && p) || (IsSucc n && q)) q where
-  cases _ _ = sorry
-  
-instance Cases (Succ n) ((IsZero (Succ n) && p) || (IsSucc (Succ n) && q)) q where
-  cases _ _ = sorry
+instance Simplifiable (IsZero Zero)     TRUE
+instance Simplifiable (IsZero (Succ n)) FALSE
+instance Simplifiable (IsSucc Zero)     FALSE
+instance Simplifiable (IsSucc (Succ n)) TRUE
   
 -- | Addition of natural numbers.
 newtype Plus x y = Plus Defn
@@ -208,8 +211,17 @@ trichotomy = sorry
 order_addL :: (x < y) -> Proof (z + x < z + y)
 order_addL _ = sorry
 
+order_succ :: (x < y) -> Proof (Succ x < Succ y)
+order_succ _ = sorry
+
+order_pred :: (Succ x < Succ y) -> Proof (x < y)
+order_pred _ = sorry
+
 order_mulL :: (z /= Zero) -> (x < y) -> Proof (z * x < z * y)
 order_mulL _ _ = sorry
+
+separated :: (x < y) -> Proof (x /= y)
+separated _ = sorry
 
 -- | If x is less than
 exists_diff :: (x < y) -> Proof (Exists z (x + z == y))
@@ -243,6 +255,9 @@ instance Argument (Pred n) 0 where
 pred :: (Integer ~~ x ::: x /= Zero)
     -> (Integer ~~ Pred x ::: x == Succ (Pred x))
 pred x = inject sorry $ assert_is (bare x - 1)
+
+succ_pred_lemma :: Proof (Succ (Pred n) == n)
+succ_pred_lemma = sorry
 
 induct :: (Integer ~~ x)
       -> (Proof (x == Zero) -> t)
@@ -298,14 +313,71 @@ def_by_nat_cases :: (Defining f, Argument f a, GetArg f a ~ n)
 def_by_nat_cases _ n zc sc = inject sorry $
   assert_is $ nat_cases n (nameless.zc) (\pf p -> nameless (sc pf p))
 
-nat_cases' :: forall n f a zcase scase t1 t2 t m1 m2. (Defining f, Argument f a, GetArg f a ~ n,
-                                                     Matchy (Proxy (IsZero n), t1) m1 t, Matchy (Proxy (IsSucc n), t2) m2 t)
-  => (Proof (IsZero n) -> t1) 
+
+nat_cases' :: forall n zcase scase  t m1 m2 t1 t2.
+  ( ToMatch t1 t m1, Decorated t1 t
+  , ToMatch t2 t m2, Decorated t2 t
+  )                                   
+  => (Proof (IsZero n) -> t1)
   -> (Proof (IsSucc n) -> (Integer ~~ Pred n) -> t2)
   -> (Integer ~~ n)
-  -> Maybe (Match (MCons (AlsoGuard (IsZero n, m1))
-                         (AlsoGuard (IsSucc n, m2))) t)
+  -> Match (MCons (MGuard (IsZero n) m1)
+                  (MGuard (IsSucc n) m2)) t
 
 nat_cases' zc sc
-  =   defCase (Proxy @(IsZero n)) ((== 0) . nameless) (const $ zc sorry)
-  <+> defCase (Proxy @(IsSucc n)) ((/= 0) . nameless) (\n -> sc sorry (assert_is $ nameless n - 1))
+  = closeCases
+  $   defCase' (Proxy @(IsZero n)) ((== 0) . nameless) (const $ zc sorry)
+  <++> defCase' (Proxy @(IsSucc n)) ((/= 0) . nameless) (\n -> sc sorry (assert_is $ nameless n - 1))
+
+def_by_nat_cases' :: forall n f a zcase scase  t m1 m2 t1 t2.
+  (Defining f, Argument f a, GetArg f a ~ n
+  , ToMatch t1 t m1
+  , ToMatch t2 t m2
+  )                                   
+  => (Proof (IsZero n) -> t1)
+  -> (Proof (IsSucc n) -> (Integer ~~ Pred n) -> t2)
+  -> (Integer ~~ n)
+  -> (t ~~ f ::: M2TyDisj (MCons (MGuard (IsZero n) m1) (MGuard (IsSucc n) m2)) f)
+
+def_by_nat_cases' zc sc = toDefDisj (nat_cases' zc sc)
+
+
+newtype None_ = None_ Defn
+newtype One_  = One_  Defn
+newtype Many_ = Many_ Defn
+
+data Some = None | One | Many deriving Show
+newtype Test1 n = Test1 Defn
+
+instance Argument (Test1 (n :: *)) 0 where
+  type GetArg (Test1 n) 0    = n
+  type SetArg (Test1 n) 0 n' = Test1 n'
+
+
+test1 :: (Integer ~~ n) -> (Some ~~ Test1 n ::: (IsZero n --> Test1 n == None_)
+                                          && (IsSucc n --> ( (IsZero (Pred n) --> Test1 n == One_)
+                                                        &&  (IsSucc (Pred n) --> Test1 n == Many_))))
+test1 = toDefDisj $ nat_cases'
+  (\_ -> assert_is None)
+  (\_ -> nat_cases'
+          (\_   -> assert_is One)
+          (\_ _ -> assert_is Many))
+
+instance Discriminable ((IsZero n --> p) && (IsSucc n --> q)) ((IsZero n && p) || (IsSucc n && q)) where
+  discrim   _ = sorry
+  undiscrim _ = sorry
+
+instance Selectable (IsZero n) ((IsZero n --> p) && (IsSucc n --> q)) p where
+  select _ _ = sorry
+
+instance Selectable (IsSucc n) ((IsZero n --> p) && (IsSucc n --> q)) q where
+  select _ _ = sorry
+
+instance SelectCase ((IsZero Zero --> p) && (IsSucc Zero --> q)) p where
+  select_case _ = sorry
+
+instance SelectCase ((IsZero (Succ n) --> p) && (IsSucc (Succ n) --> q)) q where
+  select_case _ = sorry
+
+nat_classify :: Proof ((IsZero n --> n == Zero) && (IsSucc n --> n == Succ (Pred n)))
+nat_classify = sorry
