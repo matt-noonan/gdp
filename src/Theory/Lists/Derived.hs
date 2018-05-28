@@ -295,13 +295,25 @@ leftPad n x xs =
     naming x $ \x' ->
       naming xs' $ \xs' -> bare $ leftPad' n' x' xs'
 
+type LeftPad n x xs = Replicate (n `Natsub` Length xs) x ++ xs
 leftPad' :: (Integer ~~ n)
         -> (a ~~ x)
         -> ([a] ~~ xs)
-        -> ([a] ~~ Replicate n (Natsub n (Length xs)) x ++ xs)
+        -> ([a] ~~ LeftPad n x xs)
 
 leftPad' n x xs = replicate (n `natsub` length xs) x ++ xs
 
+type Hillel_leftPad_spec_pt1 n x xs k
+  = Not (n > Length xs) -> Proof (Index k xs == Index k (LeftPad n x xs))
+
+type Hillel_leftPad_spec_pt2 n x xs k
+  = (n < Length xs) -> (k < (n `Natsub` Length xs)) -> Proof (Index k (LeftPad n x xs) == x)
+
+type Hillel_leftPad_spec_pt3 n x xs k
+  = (n < Length xs) -> Not (k < (n `Natsub` Length xs)) -> Proof (Index k (LeftPad n x xs) == Index (k + (n `Natsub` Length xs)) xs)
+
+  
 natsub :: (Integer ~~ x)
        -> (Integer ~~ y)
        -> (Integer ~~ Natsub x y ::: ((y < x) && (y + Natsub x y == x)) || (Not (y < x) && Natsub x y == Zero))
+natsub x y = error "todo"

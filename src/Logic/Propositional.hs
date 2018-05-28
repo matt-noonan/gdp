@@ -128,8 +128,10 @@ module Logic.Propositional
   , nameless
   , using
   , using2
+  , using3
   , named
   , named2
+  , named3
   , bare
   , (&&.)
   , is_also
@@ -1196,11 +1198,18 @@ using x k = k (coerce x)
 using2 :: a -> b -> (forall name1 name2. (a ~~ name1) -> (b ~~ name2) -> t) -> t
 using2 x1 x2 k = k (coerce x1) (coerce x2)
 
+-- | Like `using`, but with two parameters at the same time.
+using3 :: a -> b -> c -> (forall name1 name2 name3. (a ~~ name1) -> (b ~~ name2) -> (c ~~ name3) -> t) -> t
+using3 x1 x2 x3 k = k (coerce x1) (coerce x2) (coerce x3)
+
 named :: (forall name. (a ~~ name) -> t) -> a -> t
 named k x = k (coerce x)
 
 named2 :: (forall name1 name2. (a ~~ name1) -> (b ~~ name2) -> t) -> a -> b -> t
 named2 k = \x1 x2 -> using2 x1 x2 k
+
+named3 :: (forall name1 name2 name3. (a ~~ name1) -> (b ~~ name2) -> (c ~~ name3) -> t) -> a -> b -> c -> t
+named3 k = \x1 x2 x3 -> using3 x1 x2 x3 k
 
 bare :: (a ~~ n ::: p) -> a
 bare = nameless . the
