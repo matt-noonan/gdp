@@ -101,7 +101,7 @@ substituteR _ _ _ = axiom
   Theory of equality
 --------------------------------------------------}
 
--- | Test if the two name arguments are equal an, if so, produce a proof
+-- | Test if the two named arguments are equal and, if so, produce a proof
 --   of equality for the names.
 same :: Lawful Eq a => (a ~~ x) -> (a ~~ y) -> Maybe (Proof (x == y))
 same (The x) (The y) = if x == y then Just axiom else Nothing
