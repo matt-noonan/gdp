@@ -31,7 +31,7 @@ newtype SortedBy comp name = SortedBy Defn
 sortBy :: ((a -> a -> Ordering) ~~ comp)
        -> [a]
        -> ([a] ?SortedBy comp)
-sortBy comp xs = assert (L.sortBy (the comp) xs)
+sortBy (The comp) xs = assert (L.sortBy comp xs)
 
 -- Merge the two lists using the comparator named `comp`. The lists must
 -- have already been sorted using `comp`, and the result will also be
@@ -40,14 +40,14 @@ mergeBy :: ((a -> a -> Ordering) ~~ comp)
         -> ([a] ?SortedBy comp)
         -> ([a] ?SortedBy comp)
         -> ([a] ?SortedBy comp)
-mergeBy comp xs ys = assert (unsafeMergeBy (the comp) (the xs) (the ys))
+mergeBy (The comp) (The xs) (The ys) = assert (unsafeMergeBy comp xs ys)
 
 newtype Opposite comp = Opposite Defn
 
 -- A named version of the opposite ordering.
 opposite :: ((a -> a -> Ordering) ~~ comp)
          -> ((a -> a -> Ordering) ~~ Opposite comp)
-opposite comp = defn $ \x y -> case (the comp) x y of
+opposite (The comp) = defn $ \x y -> case comp x y of
   GT -> LT
   EQ -> EQ
   LT -> GT
@@ -56,7 +56,7 @@ newtype Reverse xs = Reverse Defn
 
 -- A named version of Prelude's 'reverse'.
 rev :: ([a] ~~ xs) -> ([a] ~~ Reverse xs)
-rev xs = defn (reverse (the xs))
+rev (The xs) = defn (reverse xs)
 
 -- A lemma about reversing sorted lists.
 rev_ord_lemma :: SortedBy comp xs -> Proof (SortedBy (Opposite comp) (Reverse xs))

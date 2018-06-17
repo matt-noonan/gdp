@@ -1,3 +1,11 @@
+{-|
+  Module      :  GDP
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module GDP
   ( module Data.Arguments
   , module Data.Refined
