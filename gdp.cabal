@@ -21,7 +21,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Data.Arguments
+  exposed-modules:     GDP
+                     , Data.Arguments
                      , Data.Refined
                      , Data.The
                      , Logic.Classes
