@@ -6,6 +6,14 @@
 {-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
+{-|
+  Module      :  Data.Refined
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Data.Refined
   (  -- * Refinement types
     -- ** Attaching arbitrary propositions to values
@@ -96,6 +104,7 @@ conjure _ = axiom
 newtype Satisfies (p :: * -> *) a = Satisfies a
 instance The (Satisfies p a) a
 
+-- | An infix alias for 'Satisfies'.
 type a ?p = Satisfies p a
 infixr 1 ?
 

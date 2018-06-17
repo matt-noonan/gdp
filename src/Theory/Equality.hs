@@ -6,15 +6,24 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
+{-|
+  Module      :  Theory.Equality
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Theory.Equality
-  ( -- * Theory of equality
+  (
     Equals, type (==)
 
-  -- ** Substitutions
+  -- ** Substitutions and equational reasoning
+  , (==.)
+  , apply
   , substitute
   , substituteL
   , substituteR
-  , apply
 
   -- ** Relating to other forms of equality
   , same
@@ -41,6 +50,7 @@ import Data.Type.Equality ((:~:)(..))
 --   for the other, anywhere you please.
 newtype Equals x y = Equals Defn
 
+-- | An infix alias for 'Equals'.
 type x == y = x `Equals` y
 infix 4 ==
 
@@ -51,6 +61,18 @@ instance Argument (Equals x y) 0 where
 instance Argument (Equals x y) 1 where
   type GetArg (Equals x y) 1    = y
   type SetArg (Equals x y) 1 y' = Equals x y'
+
+instance Argument (Equals x y) LHS where
+  type GetArg (Equals x y) LHS    = x
+  type SetArg (Equals x y) LHS x' = Equals x' y
+
+instance Argument (Equals x y) RHS where
+  type GetArg (Equals x y) RHS    = y
+  type SetArg (Equals x y) RHS y' = Equals x y'
+
+-- | Chain equalities, a la Liquid Haskell.
+(==.) :: Proof (x == y) -> Proof (y == z) -> Proof (x == z)
+_ ==. _ = axiom
 
 -- | Apply a function to both sides of an equality.
 apply :: forall f n x x'. (Argument f n, GetArg f n ~ x)
@@ -85,7 +107,7 @@ same :: Lawful Eq a => (a ~~ x) -> (a ~~ y) -> Maybe (Proof (x == y))
 same (The x) (The y) = if x == y then Just axiom else Nothing
 
 {-| Reflect an equality between @x@ and @y@ into a propositional
-    equality between the *types* @x@ and @y@.
+    equality between the /types/ @x@ and @y@.
 
 @
 newtype Bob = Bob Defn
@@ -100,7 +122,7 @@ isBob :: (Int ~~ name) -> Maybe (Proof (name == Bob))
 isBob = same x bob
 
 f :: (Int ~~ name) -> Int
-f x = case reflectEq <$> isBob x of
+f x = case reflectEq \<$\> isBob x of
   Nothing   -> 17
   Just Refl -> needsBob x x
 @

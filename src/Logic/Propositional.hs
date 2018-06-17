@@ -11,6 +11,14 @@
 {-# LANGUAGE UndecidableSuperClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
+{-|
+  Module      :  Logic.Propositional
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Logic.Propositional
   ( -- * First-order Logic
 
@@ -97,21 +105,49 @@ import Theory.Named
   Logical constants
 --------------------------------------------------}
 
+-- | The constant "true".
 newtype TRUE  = TRUE Defn
+
+-- | The constant "false".
 newtype FALSE = FALSE Defn
+
+-- | The conjunction of @p@ and @q@.
 newtype And p q = And Defn
+
+-- | The disjunction of @p@ and @q@.
 newtype Or p q  = Or  Defn
+
+-- | The negation of @p@.
 newtype Not p   = Not Defn
+
+-- | The implication "@p@ implies @q@".
 newtype Implies p q = Implies Defn
+
+-- | Existential quantifiation.
 newtype Exists x p = Exists Defn
+
+-- | Universal quantification.
 newtype ForAll x p = ForAll Defn
 
+-- | An infix alias for @Or@.
 type p || q   = p `Or` q
+
+-- | An infix alias for @Or@.
 type p ∨ q   = p `Or` q
+
+-- | An infix alias for @Or@.
 type p \/ q  = p `Or` q
+
+-- | An infix alias for @And@.
 type p && q  = p `And` q
+
+-- | An infix alias for @And@.
 type p ∧ q   = p `And` q
+
+-- | An infix alias for @And@.
 type p /\ q  = p `And` q
+
+-- | An infix alias for @Implies@.
 type p --> q = p `Implies` q
 
 infixl 2 `Or`

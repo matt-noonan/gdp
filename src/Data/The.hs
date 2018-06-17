@@ -4,6 +4,14 @@
 {-# LANGUAGE PatternSynonyms        #-}
 {-# LANGUAGE ViewPatterns           #-}
 
+{-|
+  Module      :  Data.The
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Data.The
   ( The(..)
   , pattern The

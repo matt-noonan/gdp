@@ -4,8 +4,17 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}
 
+{-|
+  Module      :  Data.Arguments
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Data.Arguments
   ( Argument(..)
+  , LHS, RHS
   , Arg(..)
   , arg
   ) where

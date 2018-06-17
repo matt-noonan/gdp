@@ -3,6 +3,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
+{-|
+  Module      :  Logic.Classes
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Logic.Classes
   ( -- * Algebraic properties
     Reflexive(..)
@@ -188,11 +196,22 @@ class DistributiveR c c' where
   default distributiveR :: (Defining (c p q), Defining (c' p q)) => Proof (c (c' p q) r == c' (c p r) (c q r))
   distributiveR = axiom
 
+{-| A function @f@ is /injective/ if @f x == f y@ implies @x == y@.
+    The @Injective f@ typeclass provides a single method,
+    @elim_inj :: (f x == f y) -> Proof (x == y)@.
 
-class Injective c where
-  elim_inj :: (c (f x) == c (f y)) -> Proof (c x == c y)
-  default elim_inj :: (Defining (c (f x)), Defining (c (f y)), Defining (c x), Defining (c y))
-   => (c (f x) == c (f y)) -> Proof (c x == c y)
+    Within the module where @F@ is defined, you can declare @F@ to be
+    injective with an empty instance:
+
+@
+-- {x} == {y} implies x == y.
+newtype Singleton x = Singleton Defn
+instance Injective Singleton
+@
+-}
+class Injective f where
+  elim_inj :: (f x == f y) -> Proof (x == y)
+  default elim_inj :: (Defining (f x), Defining (f y)) => (f x == f y) -> Proof (x == y)
   elim_inj _ = axiom
 
 

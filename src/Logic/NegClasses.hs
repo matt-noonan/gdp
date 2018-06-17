@@ -3,6 +3,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
+{-|
+  Module      :  Logic.NegClasses
+  Copyright   :  (c) Matt Noonan 2018
+  License     :  BSD-style
+  Maintainer  :  matt.noonan@gmail.com
+  Portability :  portable
+-}
+
 module Logic.NegClasses
   ( -- * Algebraic properties
     Irreflexive(..)
