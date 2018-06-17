@@ -1,35 +1,38 @@
 name:                gdp
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis:            Reason about invariants and preconditions with ghosts of departed proofs.
+description:         Reason about invariants and preconditions with ghosts of departed proofs.
+                     The GDP library implements building blocks for creating and working with
+                     APIs that may carry intricate preconditions for proper use. As a library
+                     author, you can use `gdp` to encode your API's preconditions and invariants,
+                     so that they will be statically checked at compile-time.
+                     As a library user, you can use the `gdp` deduction rules to codify your
+                     proofs that you are using the library correctly.
 homepage:            https://github.com/githubuser/gdp#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2018 Author name here
-category:            Web
+author:              Matt Noonan
+maintainer:          matt.noonan@gmail.com
+copyright:           (c) 2018 Matt Noonan
+category:            Safe
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Logic.Propositional
-                     , Logic.Arguments
-                     , Tactics
-                     , Theory.Nat
-                     , Theory.Lists
-                     , Tutorial.Hillel
-
-  other-modules:       Theory.Nat.Assumed
-                     , Theory.Nat.Derived
-                     , Theory.Lists.Assumed
-                     , Theory.Lists.Derived
+  exposed-modules:     Data.Arguments
+                     , Data.Refined
+                     , Data.The
+                     , Logic.Classes
+                     , Logic.NegClasses
+                     , Logic.Propositional
+                     , Logic.Proof
+                     , Theory.Equality
+                     , Theory.Named
                      
   build-depends:       base >= 4.7 && < 5
-                     , reflection
-                     , containers
+                     , lawful
                      
   default-language:    Haskell2010
 

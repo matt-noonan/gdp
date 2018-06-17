@@ -289,6 +289,7 @@ index xs n = toDefDisj (nat_cases'
       lp <- toSpec length |$ and_elimR |. impl_elim ne :: Proof (Length xs == Succ (Length (Tail xs)))
       substitute (arg @1) lp ieq |$ order_pred
 
+{-
 leftPad :: Integer -> a -> [a] -> [a]
 leftPad n x xs =
   naming n $ \n' ->
@@ -317,3 +318,4 @@ natsub :: (Integer ~~ x)
        -> (Integer ~~ y)
        -> (Integer ~~ Natsub x y ::: ((y < x) && (y + Natsub x y == x)) || (Not (y < x) && Natsub x y == Zero))
 natsub x y = error "todo"
+-}

@@ -17,11 +17,11 @@ data Arg n = Arg
 arg :: Arg n
 arg = Arg
 
-class Argument (f :: *) (n :: Nat) where
-  type GetArg f n   :: *
-  type SetArg f n x :: *
+class Argument (f :: k1) (n :: k2) where
+  type GetArg f n   :: k1
+  type SetArg f n x :: k1
 
-    {-
+{-
 -- 1-argument functions
 instance Argument (f (x :: *)) 0 where
   type GetArg (f x) 0    = x
