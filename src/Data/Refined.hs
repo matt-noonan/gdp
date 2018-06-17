@@ -115,9 +115,24 @@ unname = coerce . the
 rename :: (a ?p) -> (forall name. (a ~~ name ::: p name) -> t) -> t
 rename x k = name (the x) (\x -> k (x ...axiom))
 
--- | Take a simple function with one named argument and a named return,
---   plus an implication relating a precondition to a postcondition of the
---   function, and produce a function between refined input and output types.
+{-| Take a simple function with one named argument and a named return,
+    plus an implication relating a precondition to a postcondition of the
+    function, and produce a function between refined input and output types.
+
+@
+newtype NonEmpty xs = NonEmpty Defn
+newtype Reverse  xs = Reverse  Defn
+
+rev :: ([a] ~~ xs) -> ([a] ~~ Reverse xs)
+rev xs = defn (reverse (the xs))
+
+rev_nonempty_lemma :: NonEmpty xs -> Proof (NonEmpty (Reverse xs))
+
+rev' :: ([a] ?NonEmpty) -> ([a] ?NonEmpty)
+rev' = rev ...? rev_nonempty_lemma
+@
+-}
+
 (...?) :: (forall name. (a ~~ name) -> (b ~~ f name))
       -> (forall name. p name -> Proof (q (f name)))
       -> (a ?p) -> (b ?q)

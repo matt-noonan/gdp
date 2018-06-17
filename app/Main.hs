@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE GADTs         #-}
 
 module Main where
 
@@ -6,9 +7,14 @@ import Data.The
 import Theory.Named
 import Data.Refined
 import Logic.Proof
+import Theory.Equality
 
 import Data.Ord
 import qualified Data.List as L
+import Data.Coerce
+import Unsafe.Coerce
+
+import Data.Type.Equality hiding (type (~~), type (==), apply)
 
 -- An unsafe merge. This relies on the user remembering to
 -- sort both of the inputs using the same comparator passed
