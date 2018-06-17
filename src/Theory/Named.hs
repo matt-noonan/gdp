@@ -18,7 +18,7 @@ module Theory.Named
   , defn
   ) where
 
-import The
+import Data.The
 import Data.Coerce
 
 {--------------------------------------------------

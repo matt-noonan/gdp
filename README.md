@@ -1,3 +1,4 @@
-# gdp
+# gdp: Ghosts of Departed Proofs
 
-add description of gdp here
+
+

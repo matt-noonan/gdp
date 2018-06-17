@@ -17,10 +17,10 @@ module Theory.Equality
 
   ) where
 
+import Data.Arguments
+import Data.The
 import Theory.Named
-import Logic.Arguments
 import Logic.Proof (Proof, axiom)
-import The
 
 import Lawful
 

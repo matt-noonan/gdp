@@ -58,4 +58,4 @@ test-suite gdp-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/gdp
+  location: https://github.com/matt-noonan/gdp

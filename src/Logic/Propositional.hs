@@ -86,9 +86,9 @@ module Logic.Propositional
 
   ) where
 
-import Data.The
+import Data.Arguments
 import Data.Refined
-import Logic.Arguments
+import Data.The
 import Logic.Classes
 import Logic.Proof
 import Theory.Named
