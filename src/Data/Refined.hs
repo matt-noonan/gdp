@@ -109,7 +109,7 @@ type a ?p = Satisfies p a
 infixr 1 ?
 
 -- | For library authors: assert that a property holds.
-assert :: Defining (p n) => a -> (a ?p)
+assert :: Defining (p ()) => a -> (a ?p)
 assert x = name x (\x -> unname (x ...axiom))
 
 -- | Existential introduction for names: given a named value of
