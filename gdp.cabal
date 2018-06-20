@@ -8,7 +8,7 @@ description:         Reason about invariants and preconditions with ghosts of de
                      so that they will be statically checked at compile-time.
                      As a library user, you can use the `gdp` deduction rules to codify your
                      proofs that you are using the library correctly.
-homepage:            https://github.com/githubuser/gdp#readme
+homepage:            https://github.com/matt-noonan/gdp#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Matt Noonan
