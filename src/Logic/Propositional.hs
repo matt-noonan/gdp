@@ -1,11 +1,9 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
@@ -24,7 +22,7 @@ module Logic.Propositional
 
   -- ** Logical symbols
     TRUE, FALSE
-  
+
   , And,     type (&&), type (∧), type (/\)
   , Or,      type (||), type (∨), type (\/)
   , Implies, type (-->)
@@ -94,9 +92,6 @@ module Logic.Propositional
 
   ) where
 
-import Data.Arguments
-import Data.Refined
-import Data.The
 import Logic.Classes
 import Logic.Proof
 import Theory.Named
@@ -301,7 +296,7 @@ and_elimR _ = axiom
 --   of P, and a proof of Q.
 and_elim :: p && q -> Proof (p, q)
 and_elim c = (,) <$> and_elimL c <*> and_elimR c
-  
+
 {-| If you have a proof of R from P, and a proof of
      R from Q, then convert "P or Q" into a proof of R.
 -}
@@ -339,7 +334,7 @@ modus_ponens = flip impl_elim
                                   -----         (assumption)
                         p --> q,    p
                        ---------------------    (modus ponens)
-                 q,           Not q    
+                 q,           Not q
               --------------------------        (contradicts')
                       FALSE
           ------------------------------------- (not-intro)
@@ -409,7 +404,7 @@ lem = axiom
 {-| Proof by contradiction: this proof technique allows
      you to prove P by showing that, from "Not P", you
      can prove a falsehood.
-  
+
      Proof by contradiction is not a theorem of
      constructive logic, so it requires the @Classical@
      constraint. But note that the similar technique
@@ -442,7 +437,7 @@ contradiction impl =
    |$ or_elimL given
    |/ impl
    |. absurd
-  
+
 {-| Double-negation elimination. This is another non-constructive
     proof technique, so it requires the @Classical@ constraint.
 
@@ -475,4 +470,3 @@ instance DistributiveL And And
 instance DistributiveL And Or
 instance DistributiveL Or  And
 instance DistributiveL Or  Or
-
