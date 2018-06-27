@@ -335,7 +335,7 @@ modus_ponens = flip impl_elim
                                   -----         (assumption)
                         p --> q,    p
                        ---------------------    (modus ponens)
-                 q,           Not q
+               Not q,            q
               --------------------------        (contradicts')
                       FALSE
           ------------------------------------- (not-intro)
