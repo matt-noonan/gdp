@@ -102,28 +102,28 @@ import Theory.Named
 --------------------------------------------------}
 
 -- | The constant "true".
-newtype TRUE  = TRUE Defn
+data TRUE
 
 -- | The constant "false".
-newtype FALSE = FALSE Defn
+data FALSE
 
 -- | The conjunction of @p@ and @q@.
-newtype And p q = And Defn
+data And p q
 
 -- | The disjunction of @p@ and @q@.
-newtype Or p q  = Or  Defn
+data Or p q
 
 -- | The negation of @p@.
-newtype Not p   = Not Defn
+data Not p
 
 -- | The implication "@p@ implies @q@".
-newtype Implies p q = Implies Defn
+data Implies p q
 
 -- | Existential quantifiation.
-newtype Exists x p = Exists Defn
+data Exists x p
 
 -- | Universal quantification.
-newtype ForAll x p = ForAll Defn
+data ForAll x p
 
 -- | An infix alias for @Or@.
 type p || q   = p `Or` q
