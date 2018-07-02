@@ -1,7 +1,4 @@
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts      #-}
 
 {-|
   Module      :  Logic.NegClasses
@@ -19,8 +16,6 @@ module Logic.NegClasses
 
 import Logic.Proof
 import Logic.Propositional (Not)
-import Theory.Equality
-import Theory.Named
 
 {--------------------------------------------------------
   Special properties of predicates and functions
@@ -42,7 +37,6 @@ instance Irreflexive DifferentColor
 -}
 class Irreflexive r where
   irrefl :: Proof (Not (r x x))
-  default irrefl :: (Defining (r x x)) => Proof (Not (r x x))
   irrefl = axiom
 
 
@@ -60,8 +54,7 @@ class Irreflexive r where
 newtype AncestorOf p q = AncestorOf Defn
 instance Antisymmetric AncestorOf
 @
--}   
+-}
 class Antisymmetric c where
-  antisymmetric :: c p q -> Proof (Not (c q p))
-  default antisymmetric :: Defining (c p q) => c p q -> Proof (Not (c q p))
+  antisymmetric :: Proof (c p q) -> Proof (Not (c q p))
   antisymmetric _ = axiom
