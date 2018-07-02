@@ -76,26 +76,28 @@ module Logic.Propositional
   , contradiction
   , not_not_elim
 
-   -- *** Mapping over conjunctions and disjunctions
-  , and_mapL
-  , and_mapR
-  , and_map
+  -- *** Mapping over conjunctions and disjunctions.
 
-  , or_mapL
-  , or_mapR
-  , or_map
+  -- | These function names mimic the ones for @Bifunctor@ and
+  -- @Profunctor@.
+  , firstAnd
+  , secondAnd
+  , bimapAnd
 
-  , impl_mapL
-  , impl_mapR
-  , impl_map
+  , firstOr
+  , secondOr
+  , bimapOr
 
-  , not_map
+  , lmapImpl
+  , rmapImpl
+  , dimapImpl
+
+  , mapNot
 
   ) where
 
 import Logic.Classes
 import Logic.Proof
-import Theory.Named
 
 {--------------------------------------------------
   Logical constants
@@ -164,54 +166,48 @@ infixr 1 -->
 --------------------------------------------------}
 
 -- | Apply a derivation to the left side of a conjunction.
-and_mapL :: (Proof p -> Proof p') -> Proof (p && q) -> Proof (p' && q)
-and_mapL impl conj = let
-  (lhs, rhs) = and_elim conj
-  lhs' = impl lhs
-  in and_intro lhs' rhs
+firstAnd :: (Proof p -> Proof p') -> Proof (p && q) -> Proof (p' && q)
+firstAnd = flip bimapAnd id
 
 -- | Apply a derivation to the right side of a conjunction.
-and_mapR :: (Proof q -> Proof q') -> Proof (p && q) -> Proof (p && q')
-and_mapR impl conj = let
-  (lhs, rhs) = and_elim conj
-  rhs' = impl rhs
-  in and_intro lhs rhs'
+secondAnd :: (Proof q -> Proof q') -> Proof (p && q) -> Proof (p && q')
+secondAnd = bimapAnd id
 
 -- | Apply derivations to the left and right sides of a conjunction.
-and_map :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p && q) -> Proof (p' && q')
-and_map implP implQ conj = let
+bimapAnd :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p && q) -> Proof (p' && q')
+bimapAnd implP implQ conj = let
   (lhs, rhs) = and_elim conj
   lhs' = implP lhs
   rhs' = implQ rhs
   in and_intro lhs' rhs'
 
 -- | Apply a derivation to the left side of a disjunction.
-or_mapL :: (Proof p -> Proof p') -> Proof (p || q) -> Proof (p' || q)
-or_mapL impl = or_elim (or_introL . impl) or_introR
+firstOr :: (Proof p -> Proof p') -> Proof (p || q) -> Proof (p' || q)
+firstOr = flip bimapOr id
 
 -- | Apply a derivation to the right side of a disjunction.
-or_mapR :: (Proof q -> Proof q') -> Proof (p || q) -> Proof (p || q')
-or_mapR impl = or_elim or_introL (or_introR . impl)
+secondOr :: (Proof q -> Proof q') -> Proof (p || q) -> Proof (p || q')
+secondOr = bimapOr id
 
 -- | Apply derivations to the left and right sides of a disjunction.
-or_map :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p || q) -> Proof (p' || q')
-or_map implP implQ = or_elim (or_introL . implP) (or_introR . implQ)
+bimapOr :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p || q) -> Proof (p' || q')
+bimapOr implP implQ = or_elim (or_introL . implP) (or_introR . implQ)
 
 -- | Apply a derivation to the left side of an implication.
-impl_mapL :: (Proof p' -> Proof p) -> Proof (p --> q) -> Proof (p' --> q)
-impl_mapL derv impl = impl_intro (modus_ponens impl . derv)
+lmapImpl :: (Proof p' -> Proof p) -> Proof (p --> q) -> Proof (p' --> q)
+lmapImpl = flip dimapImpl id
 
 -- | Apply a derivation to the right side of an implication.
-impl_mapR :: (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p --> q')
-impl_mapR derv impl = impl_intro (derv . modus_ponens impl)
+rmapImpl :: (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p --> q')
+rmapImpl = dimapImpl id
 
 -- | Apply derivations to the left and right sides of an implication.
-impl_map :: (Proof p' -> Proof p) -> (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p' --> q')
-impl_map dervL dervR impl = impl_intro (dervR . modus_ponens impl . dervL)
+dimapImpl :: (Proof p' -> Proof p) -> (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p' --> q')
+dimapImpl dervL dervR impl = impl_intro (dervR . modus_ponens impl . dervL)
 
 -- | Apply a derivation inside of a negation.
-not_map :: (Proof p' -> Proof p) -> Proof (Not p) -> Proof (Not p')
-not_map impl notP = not_intro (absurd . contradicts' notP . impl)
+mapNot :: (Proof p' -> Proof p) -> Proof (Not p) -> Proof (Not p')
+mapNot impl notP = not_intro (absurd . contradicts' notP . impl)
 
 {--------------------------------------------------
   Tautologies
