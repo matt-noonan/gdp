@@ -1,13 +1,7 @@
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE ExplicitNamespaces    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE ConstraintKinds       #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE UndecidableSuperClasses #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TypeOperators         #-}
 
 {-|
   Module      :  Logic.Propositional
