@@ -334,8 +334,8 @@ modusPonens = flip elimImpl
                              Not p
 @
 
-We can encode this proof tree more-or-less directly as a @Proof@
-to implement @modus_tollens@:
+We can encode this proof tree as a @Proof@ to implement
+@modus_tollens@:
 
 @
 modusTollens :: Proof (p --> q) -> Proof (Not q) -> Proof (Not p)
