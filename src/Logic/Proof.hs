@@ -79,8 +79,8 @@ sorry = QED
 data Reverse xs = Reverse Defn
 data Length  xs = Length  Defn
 
-rev_length_lemma :: Proof (Length (Reverse xs) == Length xs)
-rev_length_lemma = axiom
+revLengthLemma :: Proof (Length (Reverse xs) == Length xs)
+revLengthLemma = axiom
 @
 -}
 axiom :: Proof p
