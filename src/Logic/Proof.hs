@@ -79,6 +79,7 @@ instance Monad Proof where
 -- _Completed proofs should never use @sorry@!_
 sorry :: Proof p
 sorry = QED
+{-# WARNING sorry "Completed proofs should never use sorry!" #-}
 
 {-| @axiom@, like @sorry@, provides a "proof" of any
     proposition. Unlike @sorry@, which is used to indicate
