@@ -1,4 +1,5 @@
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE PolyKinds      #-}
 
 {-|
   Module      :  Logic.Proof
@@ -55,7 +56,7 @@ resulting in the error
         Actual type: Proof (p || p)
 @
 -}
-data Proof (pf :: *) = QED
+data Proof (pf :: k) = QED
 
 -- | @sorry@ can be used to provide a "proof" of
 --   any proposition, by simply assering it as
