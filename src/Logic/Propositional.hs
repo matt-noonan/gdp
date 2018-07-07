@@ -1,15 +1,7 @@
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE KindSignatures        #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE ExplicitNamespaces    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DefaultSignatures     #-}
-{-# LANGUAGE ConstraintKinds       #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE UndecidableSuperClasses #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TypeOperators         #-}
 
 {-|
   Module      :  Logic.Propositional
@@ -24,7 +16,7 @@ module Logic.Propositional
 
   -- ** Logical symbols
     TRUE, FALSE
-  
+
   , And,     type (&&), type (∧), type (/\)
   , Or,      type (||), type (∨), type (\/)
   , Implies, type (-->)
@@ -42,92 +34,97 @@ module Logic.Propositional
 
   -- | Introduction rules give the elementary building blocks
   --   for creating a formula from simpler ones.
-  , and_intro
-  , or_introL
-  , or_introR
-  , impl_intro
-  , not_intro
+  , introAnd
+  , introAnd'
+
+  , introOrL
+  , introOrR
+
+  , introImpl
+  , introNot
+
   , contrapositive
   , contradicts
   , contradicts'
-  , univ_intro
-  , ex_intro
+  , introUniv
+  , introEx
 
   -- *** Elimination rules
 
   -- | Elimination rules give the elementary building blocks for
   --   decomposing a complex formula into simpler ones.
-  , and_elimL
-  , and_elimR
-  , and_elim
-  , or_elim
-  , or_elimL
-  , or_elimR
-  , impl_elim
-  , modus_ponens
-  , modus_tollens
+  , elimAndL
+  , elimAndR
+
+  , elimOr
+  , elimOrL
+  , elimOrR
+
+  , elimImpl
+  , modusPonens
+  , modusTollens
   , absurd
-  , univ_elim
-  , ex_elim
+  , elimUniv
+  , elimEx
 
   -- *** Classical logic and the Law of the Excluded Middle
   , Classical
   , classically
   , lem
   , contradiction
-  , not_not_elim
+  , elimNot
+  , elimNotNot
 
-   -- *** Mapping over conjunctions and disjunctions
-  , and_mapL
-  , and_mapR
-  , and_map
+  -- *** Mapping over conjunctions and disjunctions.
 
-  , or_mapL
-  , or_mapR
-  , or_map
+  -- | These function names mimic the ones for
+  -- (@Functor@/@Bifunctor@/@Profunctor@).
+  , firstAnd
+  , secondAnd
+  , bimapAnd
 
-  , impl_mapL
-  , impl_mapR
-  , impl_map
+  , firstOr
+  , secondOr
+  , bimapOr
 
-  , not_map
+  , lmapImpl
+  , rmapImpl
+  , dimapImpl
+
+  , mapNot
 
   ) where
 
-import Data.Arguments
-import Data.Refined
-import Data.The
 import Logic.Classes
 import Logic.Proof
-import Theory.Named
 
 {--------------------------------------------------
   Logical constants
 --------------------------------------------------}
 
 -- | The constant "true".
-newtype TRUE  = TRUE Defn
+data TRUE
 
 -- | The constant "false".
-newtype FALSE = FALSE Defn
+data FALSE
 
 -- | The conjunction of @p@ and @q@.
-newtype And p q = And Defn
+data And p q
 
 -- | The disjunction of @p@ and @q@.
-newtype Or p q  = Or  Defn
+data Or p q
 
 -- | The negation of @p@.
-newtype Not p   = Not Defn
+data Not p
 
 -- | The implication "@p@ implies @q@".
-newtype Implies p q = Implies Defn
+data Implies p q
 
 -- | Existential quantifiation.
-newtype Exists x p = Exists Defn
+data Exists x p
 
 -- | Universal quantification.
-newtype ForAll x p = ForAll Defn
+data ForAll x p
 
 -- | An infix alias for @Or@.
 type p || q   = p `Or` q
@@ -168,54 +165,48 @@ infixr 1 -->
 --------------------------------------------------}
 
 -- | Apply a derivation to the left side of a conjunction.
-and_mapL :: (p -> Proof p') -> (p && q) -> Proof (p' && q)
-and_mapL impl conj = do
-  (lhs, rhs) <- and_elim conj
-  lhs' <- impl lhs
-  and_intro lhs' rhs
+firstAnd :: (Proof p -> Proof p') -> Proof (p && q) -> Proof (p' && q)
+firstAnd = flip bimapAnd id
 
 -- | Apply a derivation to the right side of a conjunction.
-and_mapR :: (q -> Proof q') -> (p && q) -> Proof (p && q')
-and_mapR impl conj = do
-  (lhs, rhs) <- and_elim conj
-  rhs' <- impl rhs
-  and_intro lhs rhs'
+secondAnd :: (Proof q -> Proof q') -> Proof (p && q) -> Proof (p && q')
+secondAnd = bimapAnd id
 
 -- | Apply derivations to the left and right sides of a conjunction.
-and_map :: (p -> Proof p') -> (q -> Proof q') -> (p && q) -> Proof (p' && q')
-and_map implP implQ conj = do
-  (lhs, rhs) <- and_elim conj
-  lhs' <- implP lhs
-  rhs' <- implQ rhs
-  and_intro lhs' rhs'
+bimapAnd :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p && q) -> Proof (p' && q')
+bimapAnd implP implQ conj = let
+  (lhs, rhs) = elimAnd conj
+  lhs' = implP lhs
+  rhs' = implQ rhs
+  in introAnd lhs' rhs'
 
 -- | Apply a derivation to the left side of a disjunction.
-or_mapL :: (p -> Proof p') -> (p || q) -> Proof (p' || q)
-or_mapL impl = or_elim (impl |. or_introL) or_introR
+firstOr :: (Proof p -> Proof p') -> Proof (p || q) -> Proof (p' || q)
+firstOr = flip bimapOr id
 
 -- | Apply a derivation to the right side of a disjunction.
-or_mapR :: (q -> Proof q') -> (p || q) -> Proof (p || q')
-or_mapR impl = or_elim or_introL (impl |. or_introR)
+secondOr :: (Proof q -> Proof q') -> Proof (p || q) -> Proof (p || q')
+secondOr = bimapOr id
 
 -- | Apply derivations to the left and right sides of a disjunction.
-or_map :: (p -> Proof p') -> (q -> Proof q') -> (p || q) -> Proof (p' || q')
-or_map implP implQ = or_elim (implP |. or_introL) (implQ |. or_introR)
+bimapOr :: (Proof p -> Proof p') -> (Proof q -> Proof q') -> Proof (p || q) -> Proof (p' || q')
+bimapOr implP implQ = elimOr (introOrL . implP) (introOrR . implQ)
 
 -- | Apply a derivation to the left side of an implication.
-impl_mapL :: (p' -> Proof p) -> (p --> q) -> Proof (p' --> q)
-impl_mapL derv impl = impl_intro (derv |. modus_ponens impl)
+lmapImpl :: (Proof p' -> Proof p) -> Proof (p --> q) -> Proof (p' --> q)
+lmapImpl = flip dimapImpl id
 
 -- | Apply a derivation to the right side of an implication.
-impl_mapR :: (q -> Proof q') -> (p --> q) -> Proof (p --> q')
-impl_mapR derv impl = impl_intro (modus_ponens impl |. derv)
+rmapImpl :: (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p --> q')
+rmapImpl = dimapImpl id
 
 -- | Apply derivations to the left and right sides of an implication.
-impl_map :: (p' -> Proof p) -> (q -> Proof q') -> (p --> q) -> Proof (p' --> q')
-impl_map dervL dervR impl = impl_intro (dervL |. modus_ponens impl |. dervR)
+dimapImpl :: (Proof p' -> Proof p) -> (Proof q -> Proof q') -> Proof (p --> q) -> Proof (p' --> q')
+dimapImpl dervL dervR impl = introImpl (dervR . modusPonens impl . dervL)
 
 -- | Apply a derivation inside of a negation.
-not_map :: (p' -> Proof p) -> Not p -> Proof (Not p')
-not_map impl notP = not_intro (impl |. contradicts' notP |. absurd)
+mapNot :: (Proof p' -> Proof p) -> Proof (Not p) -> Proof (Not p')
+mapNot impl notP = introNot (absurd . contradicts' notP . impl)
 
 {--------------------------------------------------
   Tautologies
@@ -234,100 +225,97 @@ noncontra = axiom
 --------------------------------------------------}
 
 -- | Prove "P and Q" from P and Q.
-and_intro :: p -> q -> Proof (p && q)
-and_intro _ _ = axiom
+introAnd :: Proof p -> Proof q -> Proof (p && q)
+introAnd _ _ = axiom
 
 -- | Prove "P and Q" from Q and P.
-and_intro' :: q -> p -> Proof (p && q)
-and_intro' _ _ = axiom
+introAnd' :: Proof q -> Proof p -> Proof (p && q)
+introAnd' _ _ = axiom
 
 -- | Prove "P or Q" from  P.
-or_introL :: p -> Proof (p || q)
-or_introL _ = axiom
+introOrL :: Proof p -> Proof (p || q)
+introOrL _ = axiom
 
 -- | Prove "P or Q" from Q.
-or_introR :: q -> Proof (p || q)
-or_introR _ = axiom
+introOrR :: Proof q -> Proof (p || q)
+introOrR _ = axiom
 
 -- | Prove "P implies Q" by demonstrating that,
 --   from the assumption P, you can prove Q.
-impl_intro :: (p -> Proof q) -> Proof (p --> q)
-impl_intro _ = axiom
+introImpl :: (Proof p -> Proof q) -> Proof (p --> q)
+introImpl _ = axiom
 
 -- | Prove "not P" by demonstrating that,
 --   from the assumption P, you can derive a false conclusion.
-not_intro :: (p -> Proof FALSE) -> Proof (Not p)
-not_intro _ = axiom
+introNot :: (Proof p -> Proof FALSE) -> Proof (Not p)
+introNot _ = axiom
 
--- | `contrapositive` is an alias for `not_intro`, with
+-- | `contrapositive` is an alias for `introNot`, with
 --   a somewhat more suggestive name. Not-introduction
 --   corresponds to the proof technique "proof by contrapositive".
-contrapositive :: (p -> Proof FALSE) -> Proof (Not p)
-contrapositive = not_intro
+contrapositive :: (Proof p -> Proof FALSE) -> Proof (Not p)
+contrapositive = introNot
 
 -- | Prove a contradiction from "P" and "not P".
-contradicts :: p -> Not p -> Proof FALSE
+contradicts :: Proof p -> Proof (Not p) -> Proof FALSE
 contradicts _ _ = axiom
 
 -- | `contradicts'` is `contradicts` with the arguments
 --   flipped. It is useful when you want to partially
 --   apply `contradicts` to a negation.
-contradicts' :: Not p -> p -> Proof FALSE
+contradicts' :: Proof (Not p) -> Proof p -> Proof FALSE
 contradicts' = flip contradicts
 
 -- | Prove "For all x, P(x)" from a proof of P(*c*) with
 --   *c* indeterminate.
-univ_intro :: (forall c. Proof (p c)) -> Proof (ForAll x (p x))
-univ_intro _ = axiom
+introUniv :: (forall c. Proof (p c)) -> Proof (ForAll x (p x))
+introUniv _ = axiom
 
 -- | Prove "There exists an x such that P(x)" from a specific
 --   instance of P(c).
-ex_intro :: p c -> Proof (Exists x (p x))
-ex_intro _ = axiom
+introEx :: Proof (p c) -> Proof (Exists x (p x))
+introEx _ = axiom
 
 {--------------------------------------------------
   Elimination rules
 --------------------------------------------------}
 
 -- | From the assumption "P and Q", produce a proof of P.
-and_elimL :: p && q -> Proof p
-and_elimL _ = axiom
+elimAndL :: Proof (p && q) -> Proof p
+elimAndL _ = axiom
 
 -- | From the assumption "P and Q", produce a proof of Q.
-and_elimR :: p && q -> Proof q
-and_elimR _ = axiom
+elimAndR :: Proof (p && q) -> Proof q
+elimAndR _ = axiom
 
 -- | From the assumption "P and Q", produce both a proof
 --   of P, and a proof of Q.
-and_elim :: p && q -> Proof (p, q)
-and_elim c = (,) <$> and_elimL c <*> and_elimR c
-  
-{-| If you have a proof of R from P, and a proof of
-     R from Q, then convert "P or Q" into a proof of R.
--}
-or_elim :: (p -> Proof r) -> (q -> Proof r) -> (p || q) -> Proof r
-or_elim _ _ _ = axiom
+elimAnd :: Proof (p && q) -> (Proof p, Proof q)
+elimAnd c = (elimAndL c, elimAndR c)
 
-{-| Eliminate the first alternative in a conjunction.
--}
-or_elimL :: (p -> Proof r) -> (p || q) -> (q -> Proof r) -> Proof r
-or_elimL case1 disj case2 = or_elim case1 case2 disj
+-- | If you have a proof of R from P, and a proof of R from Q, then
+--   convert "P or Q" into a proof of R.
+elimOr :: (Proof p -> Proof r) -> (Proof q -> Proof r) -> Proof (p || q) -> Proof r
+elimOr _ _ _ = axiom
 
-{-| Eliminate the second alternative in a conjunction.
--}
-or_elimR :: (q -> Proof r) -> (p || q) -> (p -> Proof r) -> Proof r
-or_elimR case2 disj case1 = or_elim case1 case2 disj
+-- | Eliminate the first alternative in a conjunction.
+elimOrL :: (Proof p -> Proof r) -> Proof (p || q) -> (Proof q -> Proof r) -> Proof r
+elimOrL case1 disj case2 = elimOr case1 case2 disj
+
+-- | Eliminate the second alternative in a conjunction.
+elimOrR :: (Proof q -> Proof r) -> Proof (p || q) -> (Proof p -> Proof r) -> Proof r
+elimOrR case2 disj case1 = elimOr case1 case2 disj
 
 -- | Given "P imples Q" and P, produce a proof of Q.
 --   (modus ponens)
-impl_elim :: p -> (p --> q) -> Proof q
-impl_elim _ _ = axiom
+elimImpl :: Proof p -> Proof (p --> q) -> Proof q
+elimImpl _ _ = axiom
 
--- | @modus_ponens@ is just @impl_elim@ with the arguments
+-- | @modusPonens@ is just `elimImpl` with the arguments
 --   flipped. In this form, it is useful for partially
 --   applying an implication.
-modus_ponens :: (p --> q) -> p -> Proof q
-modus_ponens = flip impl_elim
+modusPonens :: Proof (p --> q) -> Proof p -> Proof q
+modusPonens = flip elimImpl
 
 {-| Modus tollens lets you prove "Not P" from
     "P implies Q" and "Not Q".
@@ -339,46 +327,39 @@ modus_ponens = flip impl_elim
                                   -----         (assumption)
                         p --> q,    p
                        ---------------------    (modus ponens)
-                 q,           Not q    
+               Not q,            q
               --------------------------        (contradicts')
                       FALSE
           ------------------------------------- (not-intro)
                              Not p
 @
 
-We can encode this proof tree more-or-less directly as a @Proof@
-to implement @modus_tollens@:
+We can encode this proof tree as a @Proof@ to implement
+@modus_tollens@:
 
 @
-modus_tollens :: (p --> q) -> Not q -> Proof (Not p)
-
-modus_tollens impl q' =
-  do  modus_ponens impl
-   |. contradicts' q'
-   |\\ not_intro
+modusTollens :: Proof (p --> q) -> Proof (Not q) -> Proof (Not p)
+modusTollens impl q' = introNot $ \p -> contradicts' q' (modusPonens impl p)
 @
 -}
 
-modus_tollens :: (p --> q) -> Not q -> Proof (Not p)
-modus_tollens impl q' =
-  do  modus_ponens impl
-   |. contradicts' q'
-   |\ not_intro
+modusTollens :: Proof (p --> q) -> Proof (Not q) -> Proof (Not p)
+modusTollens impl q' = introNot $ \p -> contradicts' q' (modusPonens impl p)
 
 -- | From a falsity, prove anything.
-absurd :: FALSE -> Proof p
+absurd :: Proof FALSE -> Proof p
 absurd _ = axiom
 
 -- | Given "For all x, P(x)" and any c, prove the proposition
 --   "P(c)".
-univ_elim :: ForAll x (p x) -> Proof (p c)
-univ_elim _ = axiom
+elimUniv :: Proof (ForAll x (p x)) -> Proof (p c)
+elimUniv _ = axiom
 
 -- | Given a proof of Q from P(c) with c generic, and the
 --   statement "There exists an x such that P(x)", produce
 --   a proof of Q.
-ex_elim :: (forall c. p c -> Proof q) -> Exists x (p x) -> Proof q
-ex_elim _ _ = axiom
+elimEx :: (forall c. Proof (p c) -> Proof q) -> Proof (Exists x (p x)) -> Proof q
+elimEx _ _ = axiom
 
 
 {--------------------------------------------------
@@ -409,7 +390,7 @@ lem = axiom
 {-| Proof by contradiction: this proof technique allows
      you to prove P by showing that, from "Not P", you
      can prove a falsehood.
-  
+
      Proof by contradiction is not a theorem of
      constructive logic, so it requires the @Classical@
      constraint. But note that the similar technique
@@ -417,8 +398,8 @@ lem = axiom
      valid in constructive logic! For comparison, the two types are:
 
 @
-contradiction  :: Classical => (Not p -> Proof FALSE) -> p
-not_intro      ::              (p     -> Proof FALSE) -> Not p
+contradiction  :: Classical => (Proof (Not p) -> Proof FALSE) -> Proof p
+introNot       ::              (Proof      p  -> Proof FALSE) -> Proof (Not p)
 @
 
 The derivation of proof by contradiction from the law of the excluded
@@ -429,32 +410,28 @@ alternative, use the provided implication to get a proof of falsehood,
 from which the desired conclusion is derived.
 
 @
-contradiction impl =
-  do  lem             -- introduce p || Not p
-   |$ or_elimL given  -- dispatch the first, straightforward case
-   |/ impl            -- Now we're on the second case. Apply the implication..
-   |. absurd          -- .. and, from falsity, conclude p.
+contradiction impl = elimOr id (absurd . impl) lem
 @
 -}
-contradiction :: forall p. Classical => (Not p -> Proof FALSE) -> Proof p
-contradiction impl =
-  do  lem
-   |$ or_elimL given
-   |/ impl
-   |. absurd
-  
+contradiction :: Classical => (Proof (Not p) -> Proof FALSE) -> Proof p
+contradiction impl = elimOr id (absurd . impl) lem
+
+-- | Alias for 'contradiction', to complete the patterns.
+elimNot :: Classical => (Proof (Not p) -> Proof FALSE) -> Proof p
+elimNot = contradiction
+
 {-| Double-negation elimination. This is another non-constructive
     proof technique, so it requires the @Classical@ constraint.
 
     The derivation of double-negation elimination follows from
     proof by contradiction, since "Not (Not p)" contradicts "Not p".
 @
-not_not_elim p'' = contradiction (contradicts' p'')
+elimNotNot p'' = contradiction (contradicts' p'')
 @
 -}
 
-not_not_elim :: Classical => Not (Not p) -> Proof p
-not_not_elim p'' = contradiction (contradicts' p'')
+elimNotNot :: Classical => Proof (Not (Not p)) -> Proof p
+elimNotNot p'' = contradiction (contradicts' p'')
 
 {--------------------------------------------------
   Algebraic properties
@@ -475,4 +452,3 @@ instance DistributiveL And And
 instance DistributiveL And Or
 instance DistributiveL Or  And
 instance DistributiveL Or  Or
-

@@ -1,7 +1,5 @@
 {-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts      #-}
 
 {-|
   Module      :  Logic.Classes
@@ -30,7 +28,6 @@ module Logic.Classes
 
 import Logic.Proof
 import Theory.Equality
-import Theory.Named
 
 {--------------------------------------------------------
   Special properties of predicates and functions
@@ -46,13 +43,12 @@ import Theory.Named
 
 @
 -- Define a reflexive binary relation
-newtype SameColor p q = SameColor Defn
+data SameColor p q
 instance Reflexive SameColor
 @
--}   
+-}
 class Reflexive r where
   refl :: Proof (r x x)
-  default refl :: (Defining (r x x)) => Proof (r x x)
   refl = axiom
 
 {-| A binary relation R is /symmetric/ if, for all x and y,
@@ -66,13 +62,12 @@ class Reflexive r where
 
 @
 -- Define a symmetric binary relation
-newtype NextTo p q = NextTo Defn
+data NextTo p q
 instance Symmetric NextTo
 @
--}   
+-}
 class Symmetric c where
-  symmetric :: c p q -> Proof (c q p)
-  default symmetric :: (Defining (c p q)) => c p q -> Proof (c q p)
+  symmetric :: Proof (c p q) -> Proof (c q p)
   symmetric _ = axiom
 
 {-| A binary relation R is /transitive/ if, for all x, y, z,
@@ -86,17 +81,16 @@ class Symmetric c where
 
 @
 -- Define a transitive binary relation
-newtype CanReach p q = CanReach Defn
+data CanReach p q
 instance Transitive CanReach
 @
--}   
+-}
 class Transitive c where
-  transitive :: c p q -> c q r -> Proof (c p r)
-  default transitive :: Defining (c p q) => c p q -> c q r -> Proof (c p r)
+  transitive :: Proof (c p q) -> Proof (c q r) -> Proof (c p r)
   transitive _ _ = axiom
 
 -- | @transitive@, with the arguments flipped.
-transitive' :: Transitive c => c q r -> c p q -> Proof (c p r)
+transitive' :: Transitive c => Proof (c q r) -> Proof (c p q) -> Proof (c p r)
 transitive' = flip transitive
 
 {-| A binary operation @#@ is idempotent if @x # x == x@ for all @x@.
@@ -108,15 +102,14 @@ transitive' = flip transitive
 
 @
 -- Define an idempotent binary operation
-newtype Union x y = Union Defn
+data Union x y
 instance Idempotent Union
 @
 -}
 class Idempotent c where
   idempotent :: Proof (c p p == p)
-  default idempotent :: Defining (c p p) => Proof (c p p == p)
   idempotent = axiom
-  
+
 {-| A binary operation @#@ is commutative if @x # y == y # x@ for all @x@ and @y@.
     The @Commutative c@ typeclass provides a single method,
     @commutative :: Proof (c x y == c y x)@.
@@ -126,13 +119,12 @@ class Idempotent c where
 
 @
 -- Define a commutative binary operation
-newtype Union x y = Union Defn
+data Union x y
 instance Commutative Union
 @
 -}
 class Commutative c where
   commutative :: Proof (c p q == c q p)
-  default commutative :: Defining (c p q) => Proof (c p q == c q p)
   commutative = axiom
 
 {-| A binary operation @#@ is associative if @x # (y # z) == (x # y) # z@ for
@@ -145,13 +137,12 @@ class Commutative c where
 
 @
 -- Define an associative binary operation
-newtype Union x y = Union Defn
+data Union x y
 instance Associative Union
 @
 -}
 class Associative c where
   associative :: Proof (c p (c q r) == c (c p q) r)
-  default associative :: Defining (c p q) => Proof (c p (c q r) == c (c p q) r)
   associative = axiom
 
 {-| A binary operation @#@ distributes over @%@ on the left if
@@ -165,14 +156,13 @@ class Associative c where
 
 @
 -- x `Union` (y `Intersect` z) == (x `Union` y) `Intersect` (x `Union` z)
-newtype Union     x y = Union     Defn
-newtype Intersect x y = Intersect Defn
+data Union     x y
+data Intersect x y
 instance DistributiveL Union Intersect
 @
 -}
 class DistributiveL c c' where
   distributiveL :: Proof (c p (c' q r) == c' (c p q) (c p r))
-  default distributiveL :: (Defining (c p q), Defining (c' p q)) => Proof (c p (c' q r) == c' (c p q) (c p r))
   distributiveL = axiom
 
 {-| A binary operation @#@ distributes over @%@ on the right if
@@ -186,14 +176,13 @@ class DistributiveL c c' where
 
 @
 -- (x `Intersect` y) `Union` z == (x `Union` z) `Intersect` (y `Union` z)
-newtype Union     x y = Union     Defn
-newtype Intersect x y = Intersect Defn
+data Union     x y
+data Intersect x y
 instance DistributiveR Union Intersect
 @
 -}
 class DistributiveR c c' where
   distributiveR :: Proof (c (c' p q) r == c' (c p r) (c q r))
-  default distributiveR :: (Defining (c p q), Defining (c' p q)) => Proof (c (c' p q) r == c' (c p r) (c q r))
   distributiveR = axiom
 
 {-| A function @f@ is /injective/ if @f x == f y@ implies @x == y@.
@@ -205,13 +194,12 @@ class DistributiveR c c' where
 
 @
 -- {x} == {y} implies x == y.
-newtype Singleton x = Singleton Defn
+data Singleton x
 instance Injective Singleton
 @
 -}
 class Injective f where
-  elim_inj :: (f x == f y) -> Proof (x == y)
-  default elim_inj :: (Defining (f x), Defining (f y)) => (f x == f y) -> Proof (x == y)
+  elim_inj :: Proof (f x == f y) -> Proof (x == y)
   elim_inj _ = axiom
 
 
