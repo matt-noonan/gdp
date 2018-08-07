@@ -26,11 +26,13 @@ library
                      , Data.Refined
                      , Data.The
                      , Logic.Classes
+                     , Logic.Implicit
                      , Logic.NegClasses
                      , Logic.Propositional
                      , Logic.Proof
                      , Theory.Equality
                      , Theory.Named
+                     , Theory.Lists
                      
   build-depends:       base >= 4.7 && < 5
                      , lawful
