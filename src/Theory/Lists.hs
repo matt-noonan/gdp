@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE ViewPatterns        #-}
 
-module Theory.Lists.Internal
+module Theory.Lists
     ( -- * Basic functions on lists
       head, tail, cons, nil
       -- ** Names for parts of a list
@@ -15,9 +15,12 @@ module Theory.Lists.Internal
     , Cons', Nil'
       -- * Reasoning about lists
       -- ** Predicates about list shapes
-    , IsCons, IsNil
+    , IsList, IsCons, IsNil
       -- ** Axioms about list shapes
+    , consIsList, nilIsList, listIsList
     , listShapes, consIsCons, headOfCons, tailOfCons
+      -- ** Induction principle
+    , listInduction
       -- * Pattern-matching on lists
       -- ** Decompositions that use explicit evidence-passing
     , classify, ListCase (..)
@@ -40,6 +43,7 @@ import           Theory.Equality
 import           Theory.Named
 
 -- | Predicates about the possible shapes of lists.
+data IsList xs
 data IsCons xs
 data IsNil  xs
 
@@ -131,6 +135,7 @@ listShapes _ = axiom
 --   @P@ is true for a list whenever it is true for the tail of the list,
 --   then @P@ is true.
 listInduction :: Proof (IsList xs) -> Proof (p Nil') -> Proof (ForAll ys ((IsList ys && p (Tail ys)) --> p ys)) -> Proof (p xs)
+listInduction _ _ _ = axiom
 
 consIsList :: Proof (IsCons xs) -> Proof (IsList xs)
 consIsList _ = axiom
@@ -138,5 +143,5 @@ consIsList _ = axiom
 nilIsList :: Proof (IsNil xs) -> Proof (IsList xs)
 nilIsList _ = axiom
 
-listsAreLists :: ([a] ~~ xs) -> Proof (IsList xs)
-listsAreLists _ = axiom
+listIsList :: ([a] ~~ xs) -> Proof (IsList xs)
+listIsList _ = axiom
