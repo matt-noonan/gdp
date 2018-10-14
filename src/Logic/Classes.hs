@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 
 {-|
   Module      :  Logic.Classes
