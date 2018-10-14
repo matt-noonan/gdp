@@ -2,6 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE PolyKinds             #-}
 
 {-|
   Module      :  Logic.Propositional

@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}

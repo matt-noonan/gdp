@@ -23,7 +23,7 @@ module Data.Arguments
 --   This is entirely a type-level operation, there
 --   is nothing corresponding to a value access or update.
 class Argument (f :: k1) (n :: k2) where
-  type GetArg f n   :: k1
+  type GetArg f n   :: k
   type SetArg f n x :: k1
 
 -- | Position: the left-hand side of a type.
