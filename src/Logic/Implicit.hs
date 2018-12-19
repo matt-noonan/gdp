@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE RoleAnnotations     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
@@ -26,6 +27,7 @@ known :: Fact p => Proof p
 known = axiom
 
 newtype WithFact p t = WithFact (Fact p => t)
+type role WithFact nominal nominal
 
 -- | Add a proof to the implicit context.
 note :: forall p t. Proof p -> (Fact p => t) -> t

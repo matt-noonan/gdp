@@ -5,6 +5,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE RoleAnnotations       #-}
 
 {-|
   Module      :  Data.Refined
@@ -61,6 +62,7 @@ import Data.Foldable (traverse_)
 -}
 newtype a ::: p = SuchThat a
 infixr 1 :::
+type role (:::) nominal nominal
 
 instance The a' a => The (a' ::: p) a where
   the (SuchThat x) = the x
@@ -102,6 +104,7 @@ conjure _ = axiom
     run-time space or time cost.
 -}
 newtype Satisfies (p :: * -> *) a = Satisfies a
+type role Satisfies nominal nominal
 instance The (Satisfies p a) a
 
 -- | An infix alias for 'Satisfies'.
@@ -130,7 +133,10 @@ rename x k = name (the x) (\x -> k (x ...axiom))
 
 @
 newtype NonEmpty xs = NonEmpty Defn
+type role Nonempty nominal -- disallows coercion of Nonempty's argument.
+
 newtype Reverse  xs = Reverse  Defn
+type role Reverse nominal
 
 rev :: ([a] ~~ xs) -> ([a] ~~ Reverse xs)
 rev xs = defn (reverse (the xs))

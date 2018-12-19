@@ -15,8 +15,8 @@ module Logic.NegClasses
   , Antisymmetric(..)
   ) where
 
-import Logic.Proof
-import Logic.Propositional (Not)
+import           Logic.Proof
+import           Logic.Propositional (Not)
 
 {--------------------------------------------------------
   Special properties of predicates and functions
@@ -33,6 +33,7 @@ import Logic.Propositional (Not)
 @
 -- Define an irreflexive binary relation
 newtype DifferentColor p q = DifferentColor Defn
+type role DifferentColor nominal nominal
 instance Irreflexive DifferentColor
 @
 -}
@@ -53,6 +54,7 @@ class Irreflexive r where
 @
 -- Define an antisymmetric binary relation
 newtype AncestorOf p q = AncestorOf Defn
+type role DifferentColor nominal nominal
 instance Antisymmetric AncestorOf
 @
 -}

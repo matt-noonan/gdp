@@ -1,5 +1,5 @@
 name:                gdp
-version:             0.0.0.2
+version:             0.0.1.0
 synopsis:            Reason about invariants and preconditions with ghosts of departed proofs.
 description:         Reason about invariants and preconditions with ghosts of departed proofs.
                      The GDP library implements building blocks for creating and working with

@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RoleAnnotations       #-}
 
 {-|
   Module      :  Theory.Named
@@ -37,6 +38,7 @@ import Data.Coerce
 --   representation as a value of type @a@, with a
 --   phantom "name" attached.
 newtype Named name a = Named a
+type role Named nominal nominal
 
 -- | An infix alias for 'Named'.
 type a ~~ name = Named name a
@@ -64,13 +66,23 @@ name3 x y z k = k (coerce x) (coerce y) (coerce z)
 {-| Library authors can introduce new names in a controlled way
     by creating @newtype@ wrappers of @Defn@. The constructor of
     the @newtype@ should *not* be exported, so that the library
-    can retain control of how the name is introduced.
+    can retain control of how the name is introduced. If a newtype
+    wrapper of @Defn@ contains phantom parameters, these parameters
+    should be given the @nominal@ type role; otherwise, library users
+    may be able to use coercions to manipulate library-specific names
+    in a manner not blessed by the library author.
 
 @
 newtype Bob = Bob Defn
 
 bob :: Int ~~ Bob
 bob = defn 42
+
+newtype FooOf name = FooOf Defn
+type role FooOf nominal -- disallow coerce :: FooOf name1 -> FooOf name2
+
+fooOf :: (Int ~~ name) -> (Int ~~ FooOf name)
+fooOf x = defn (the x)
 @
 -}
 data Defn = Defn

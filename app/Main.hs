@@ -1,12 +1,13 @@
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE GADTs         #-}
+{-# LANGUAGE GADTs           #-}
+{-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE TypeOperators   #-}
 
 module Main where
 
-import GDP
+import           GDP
 
-import Data.Ord
 import qualified Data.List as L
+import           Data.Ord
 
 -- An unsafe merge. This relies on the user remembering to
 -- sort both of the inputs using the same comparator passed
@@ -25,6 +26,7 @@ unsafeMergeBy comp xs ys = go xs ys
 -- Introduce a predicate `SortedBy comp`, indicating that
 -- the value has been sorted by the comparator named `comp`.
 newtype SortedBy comp name = SortedBy Defn
+type role SortedBy nominal nominal
 
 -- Sort a value using the comparator named `comp`. The
 -- resulting value will satisfy `SortedBy comp`.
@@ -43,6 +45,7 @@ mergeBy :: ((a -> a -> Ordering) ~~ comp)
 mergeBy (The comp) (The xs) (The ys) = assert (unsafeMergeBy comp xs ys)
 
 newtype Opposite comp = Opposite Defn
+type role Opposite nominal
 
 -- A named version of the opposite ordering.
 opposite :: ((a -> a -> Ordering) ~~ comp)
@@ -53,6 +56,7 @@ opposite (The comp) = defn $ \x y -> case comp x y of
   LT -> GT
 
 newtype Reverse xs = Reverse Defn
+type role Reverse nominal
 
 -- A named version of Prelude's 'reverse'.
 rev :: ([a] ~~ xs) -> ([a] ~~ Reverse xs)

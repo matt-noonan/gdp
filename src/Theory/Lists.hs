@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE RoleAnnotations     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE ViewPatterns        #-}
@@ -49,7 +50,9 @@ data IsNil  xs
 
 -- | Names for the parts of a list.
 newtype Head xs = Head Defn
+type role Head nominal
 newtype Tail xs = Tail Defn
+type role Tail nominal
 
 -- | Possible shapes of a list, along with evidence that the list
 --   has the given shape.
@@ -107,6 +110,7 @@ nil = defn []
 
 -- | A name for referring to the result of a @cons@ operation.
 newtype Cons' x xs = Cons' Defn
+type role Cons' nominal nominal
 
 -- | A name for referring to the empty list.
 newtype Nil' = Nil' Defn

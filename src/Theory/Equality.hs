@@ -6,6 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE RoleAnnotations       #-}
 
 {-|
   Module      :  Theory.Equality
@@ -50,6 +51,7 @@ import Data.Type.Equality ((:~:)(..))
 --   Given an equality, you are then able to substitute one side of the equality
 --   for the other, anywhere you please.
 newtype Equals x y = Equals Defn
+type role Equals nominal nominal
 
 -- | An infix alias for 'Equals'.
 type x == y = x `Equals` y
