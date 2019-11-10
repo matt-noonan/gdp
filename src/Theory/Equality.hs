@@ -82,7 +82,7 @@ apply :: forall f n x x'. (Argument f n, GetArg f n ~ x)
     => Arg n -> Proof (x == x') -> Proof (f == SetArg f n x')
 apply _ _ = axiom
 
--- | Given a formula and an equality over ones of its arguments,
+-- | Given a formula and an equality over one of its arguments,
 --   replace the left-hand side of the equality with the right-hand side.
 substitute :: (Argument f n, GetArg f n ~ x)
     => Arg n -> Proof (x == x') -> f -> Proof (SetArg f n x')
