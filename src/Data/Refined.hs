@@ -79,7 +79,7 @@ f $: x = coerce (f (exorcise x))
 
 -- | Apply an implication to the ghost proof attached to a value,
 --   leaving the value unchanged.
-(...>) :: (a ::: p) -> (p -> Proof q) -> (a ::: q)
+(...>) :: (a ::: p) -> (Proof p -> Proof q) -> (a ::: q)
 x ...> _ = coerce x
 
 -- | Forget the ghost proof attached to a value.
