@@ -299,11 +299,12 @@ elimAnd c = (elimAndL c, elimAndR c)
 elimOr :: (Proof p -> Proof r) -> (Proof q -> Proof r) -> Proof (p || q) -> Proof r
 elimOr _ _ _ = axiom
 
--- | Eliminate the first alternative in a conjunction.
+-- | elimOrL is elimOr with the disjunction in the middle.
 elimOrL :: (Proof p -> Proof r) -> Proof (p || q) -> (Proof q -> Proof r) -> Proof r
 elimOrL case1 disj case2 = elimOr case1 case2 disj
 
--- | Eliminate the second alternative in a conjunction.
+-- | elimOrR is elimOr with the disjunction in the middle and the implications
+--   swapped.
 elimOrR :: (Proof q -> Proof r) -> Proof (p || q) -> (Proof p -> Proof r) -> Proof r
 elimOrR case2 disj case1 = elimOr case1 case2 disj
 
