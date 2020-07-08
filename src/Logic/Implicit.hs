@@ -49,6 +49,7 @@ revConsLemma :: Proof (IsCons xs) -> Proof (IsCons (Reverse xs))
 -- Implement a safe 'last' function.
 last :: Fact (IsCons xs) => ([a] ~~ xs) -> a
 last xs = note (revConsLemma `on` xs) $ head (reverse xs)
+@
 -}
 on :: Fact (p n) => (Proof (p n) -> Proof q) -> (a ~~ n) -> Proof q
 on impl _ = impl known
