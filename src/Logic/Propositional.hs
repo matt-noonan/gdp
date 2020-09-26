@@ -76,6 +76,11 @@ module Logic.Propositional
   , elimNot
   , elimNotNot
 
+  , deMorganNor
+  , deMorganAndNots
+  , deMorganNand
+  , deMorganOrNots
+
   -- *** Mapping over conjunctions and disjunctions.
 
   -- | These function names mimic the ones for
@@ -363,7 +368,6 @@ elimUniv _ = axiom
 elimEx :: (forall c. Proof (p c) -> Proof q) -> Proof (Exists x (p x)) -> Proof q
 elimEx _ _ = axiom
 
-
 {--------------------------------------------------
   Classical logic
 --------------------------------------------------}
@@ -434,6 +438,23 @@ elimNotNot p'' = contradiction (contradicts' p'')
 
 elimNotNot :: Classical => Proof (Not (Not p)) -> Proof p
 elimNotNot p'' = contradiction (contradicts' p'')
+
+-- | De Morgan for Nor: If (P or Q) is False, then both P and Q are False.
+deMorganNor :: Proof (Not (p || q)) -> Proof (Not p && Not q)
+deMorganNor npq = introAnd (mapNot introOrL npq) (mapNot introOrR npq)
+
+-- | De Morgan for And of Nots :: If both P and Q are False, then (P or Q) is False.
+deMorganAndNots :: Proof (Not p && Not q) -> Proof (Not (p || q))
+deMorganAndNots npnq = introNot $ \pq -> elimOr (contradicts' (elimAndL npnq)) (contradicts' (elimAndR npnq)) pq
+
+-- | De Morgan for Nand :: If (P and Q) is False, then either P or Q are False.
+--   Need to step into the realm of classical logic for this proof.
+deMorganNand :: Classical => Proof (Not (p && q)) -> Proof (Not p || Not q)
+deMorganNand npq = elimNot (\nnpnq -> contradicts (bimapAnd elimNotNot elimNotNot (deMorganNor nnpnq)) npq)
+
+-- | De Morgan for Or of Nots: If either P or Q are False, then (P and Q) is False.
+deMorganOrNots :: Proof (Not p || Not q) -> Proof (Not (p && q))
+deMorganOrNots npnq = introNot $ \pq -> elimOr (contradicts (elimAndL pq)) (contradicts (elimAndR pq)) npnq
 
 {--------------------------------------------------
   Algebraic properties
